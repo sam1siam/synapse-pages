@@ -1,0 +1,11 @@
+title: Synapse for X
+description: Mass actions, autopilot, and an autonomous AI agent for X (Twitter).
+theme: jekyll-theme-minimal
+baseurl: "/synapse-pages"
+markdown: kramdown
+permalink: /:slug/
+defaults:
+  - scope:
+      path: ""
+    values:
+      layout: default
