@@ -78,9 +78,14 @@ permalink: /thank-you/
           if (d && d.status === "paid" && d.licenseKey) {
             // Order paid — render details.
             document.getElementById("syn-tier").textContent = (d.tier || "").toUpperCase()
-            document.getElementById("syn-period").textContent = d.period || ""
+            const periodLabel = d.period === "annual"
+              ? "1-year"
+              : d.period === "quarterly"
+                ? "3-month"
+                : (d.period || "")
+            document.getElementById("syn-period").textContent = periodLabel
             // We don't get expiresAt from /api/order; estimate from paidAt + period.
-            const days = d.period === "annual" ? 366 : 31
+            const days = d.period === "annual" ? 366 : 93
             const expires = (d.paidAt || Date.now()) + days * 24 * 60 * 60 * 1000
             document.getElementById("syn-expires").textContent = fmtDate(expires)
             document.getElementById("syn-key").textContent = d.licenseKey
