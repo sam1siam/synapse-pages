@@ -109,7 +109,7 @@ The extension declares these permissions in its manifest:
 - **`downloads`** — to save the activity-log and follower-list CSV exports to your device.
 - **`sidePanel`** — main UI surface; opens when you click the toolbar icon.
 - **`notifications`** — Chrome notifications when an account on your watchlist posts a new tweet.
-- **Host permissions** for `https://x.com/*`, `https://twitter.com/*` (the target site), `https://api.groq.com/*` (your AI provider, called only if you enable AI features), `https://*.workers.dev/*` (our Cloudflare Workers license backend), and `https://synapseforx.com/*` (post-payment redirect destination).
+- **Host permissions** for `https://x.com/*`, `https://twitter.com/*` (the target site), `https://api.groq.com/*` (your AI provider, called only if you enable AI features), and `https://*.workers.dev/*` (our Cloudflare Workers license backend).
 
 ## 7. Children's privacy
 
