@@ -5,9 +5,9 @@ permalink: /privacy/
 
 # Privacy Policy — Synapse for X
 
-**Last updated: April 29, 2026**
+**Last updated: May 12, 2026**
 
-This policy explains what data the **Synapse for X** Chrome extension ("Synapse", "the extension", "we") accesses, where it goes, and what we do with it. The short version: **Synapse runs entirely in your browser. We do not run a server, do not collect any personal data, and never see your X account, your tweets, your bookmarks, or anything else you do on x.com.**
+This policy explains what data the **Synapse for X** Chrome extension ("Synapse", "the extension", "we") accesses, where it goes, and what we do with it. The short version: **Synapse runs entirely in your browser. The only data we ever see on our servers is the license key + browser instance ID for paying customers, used to verify their subscription is active. We do not see, store, or transmit your X account, your tweets, your bookmarks, your AI provider key, or anything else you do on x.com.**
 
 If anything in this policy is unclear or you have a privacy concern, email <asam4r@gmail.com> and we will respond within 7 days.
 
@@ -25,7 +25,7 @@ Synapse never runs in the background on websites other than `x.com` and `twitter
 
 ## 2. Data Synapse stores on your device
 
-All Synapse settings and state are stored locally on your device using Chrome's [`chrome.storage.local`](https://developer.chrome.com/docs/extensions/reference/api/storage) API. This data **never leaves your computer** unless you explicitly export it (e.g., the activity-log CSV export). Specifically, Synapse stores:
+All Synapse settings and state are stored locally on your device using Chrome's [`chrome.storage.local`](https://developer.chrome.com/docs/extensions/reference/api/storage) API. This data **never leaves your computer** unless you explicitly export it (e.g., a CSV export) or it's required for license validation (key + instance ID only — see §4.2). Specifically, Synapse stores:
 
 | What | Where | Purpose |
 | --- | --- | --- |
@@ -66,15 +66,22 @@ This is **bring-your-own-key (BYOK)**: your API key, your contract, your data. *
 
 You can disable AI features at any time in Options → AI by unchecking "Enable AI features" or by deleting your API key.
 
-### 4.2 LemonSqueezy — only if you purchase a paid tier
+### 4.2 NOWPayments + our license backend — only if you purchase a paid tier
 
-If you upgrade to Pro or Ultra, Synapse uses [LemonSqueezy](https://www.lemonsqueezy.com)'s public **License Key API** to:
+If you upgrade to Pro or Ultra, Synapse uses two third-party services:
 
-- **Activate** your license key (`POST /v1/licenses/activate`) — sends your key + a randomly-generated instance name (e.g., `synapse-<uuid>`).
-- **Validate** your license key once per day (`POST /v1/licenses/validate`) — sends your key + the instance ID.
-- **Deactivate** an instance when you click "Deactivate this device" (`POST /v1/licenses/deactivate`).
+**a) NOWPayments** — [https://nowpayments.io](https://nowpayments.io) — processes your USDT (Tether) cryptocurrency payment. When you click a paid plan, you are redirected to a NOWPayments-hosted checkout page where you complete the payment in your wallet. Synapse itself never sees your wallet credentials or payment details. NOWPayments' privacy policy: <https://nowpayments.io/privacy-policy>.
 
-LemonSqueezy is the merchant of record for your purchase and handles billing, refunds, taxes, and customer support related to the transaction. Their privacy policy is at <https://www.lemonsqueezy.com/privacy>. Synapse never sends LemonSqueezy any X content, your AI key, or any data beyond what is required for licensing.
+**b) Our license backend** — a Cloudflare Workers service we operate at `synapse-license.asam4r.workers.dev`. Once your USDT payment is confirmed on-chain, NOWPayments notifies our backend, which issues a **license key**. The extension then communicates with our backend to:
+
+- **Activate** your license key — sends your key + a randomly generated per-browser instance ID (e.g., `synapse-<8-char-uuid>`).
+- **Poll for payment confirmation** after you initiate a purchase — sends only the order ID we just created.
+- **Validate** your license once per day — sends your key + instance ID.
+- **Deactivate** an instance when you click "Deactivate this device".
+
+Our backend stores: your license key, the email NOWPayments collected (if any), the tier purchased, the active browser instance(s), and the expiration date. We do not store your wallet address, IP, X content, your AI API key, or any browsing data. We never share this data with third parties.
+
+Manual revocation: if you request a refund or chargeback, we set the license to "disabled" in our database; the extension's daily validation will then lock paid features within 24 hours.
 
 ### 4.3 No analytics, no telemetry, no third-party servers
 
@@ -89,18 +96,20 @@ For clarity, **Synapse does NOT collect, transmit, or store on any server we con
 - Your AI provider API key (it is stored only on your device).
 - Your IP address, device fingerprint, browser version, or location.
 - Your browsing history, including history on x.com.
-- Any payment-card information (LemonSqueezy handles all payment processing — they do not share card data with us).
+- Any payment-card or wallet information (NOWPayments handles all payment processing — we never see your wallet address, transaction details, or any wallet credentials).
 - Any usage metrics or analytics events.
 
 ## 6. Permissions Synapse requests
 
 The extension declares these permissions in its manifest:
 
-- **`storage`** — to persist your settings and state in `chrome.storage.local`.
-- **`alarms`** — to schedule autopilot ticks, agent ticks, and daily license re-validation.
-- **`tabs`** — to find or create x.com tabs for autopilot/agent execution and to open external URLs (LemonSqueezy customer portal, AI provider sign-up).
-- **`downloads`** — to save the activity-log CSV export to your device.
-- **Host permissions** for `https://x.com/*`, `https://twitter.com/*`, `https://api.groq.com/*`, `https://api.lemonsqueezy.com/*`, and `localhost` — needed to read x.com content for actions and to call the AI provider and LemonSqueezy APIs respectively.
+- **`storage`** — to persist your settings, agent/autopilot state, persona, license, and activity log in `chrome.storage.local`.
+- **`alarms`** — to schedule autopilot ticks, agent reasoning loops, daily license re-validation, and watchlist polling.
+- **`tabs`** — to find or create x.com tabs for the agent/autopilot to operate on, and to navigate the active tab to discovery URLs (timeline, search, profile-followers).
+- **`downloads`** — to save the activity-log and follower-list CSV exports to your device.
+- **`sidePanel`** — main UI surface; opens when you click the toolbar icon.
+- **`notifications`** — Chrome notifications when an account on your watchlist posts a new tweet.
+- **Host permissions** for `https://x.com/*`, `https://twitter.com/*` (the target site), `https://api.groq.com/*` (your AI provider, called only if you enable AI features), `https://*.workers.dev/*` (our Cloudflare Workers license backend), and `https://synapseforx.com/*` (post-payment redirect destination).
 
 ## 7. Children's privacy
 
@@ -113,7 +122,7 @@ Because Synapse stores your data only on your device, you have full control:
 - **Access**: Open Options → Tools & Activity to view your activity log, settings, and license state.
 - **Delete**: Uninstall the extension from `chrome://extensions` to remove all local Synapse data. To delete just the activity log, open Options → Tools & Activity → Activity log → Clear.
 - **Export**: Options → Tools & Activity → Export CSV (Pro tier).
-- **Cancel subscription / delete LemonSqueezy data**: Use the customer portal at <https://app.lemonsqueezy.com/my-orders> to manage or cancel your subscription. Contact LemonSqueezy directly to request deletion of your purchase records.
+- **Cancel / refund a paid plan**: Crypto payments do not auto-renew, so you "cancel" simply by not buying another period. For refunds within 14 days of purchase, email <asam4r@gmail.com> with your order ID — we'll refund the USDT to your wallet and set the license to disabled. Contact NOWPayments directly to request deletion of payment records on their side.
 
 If you are in the EU/UK, you have rights under GDPR (access, rectification, erasure, portability). To exercise them with respect to anything Synapse handles, email <asam4r@gmail.com>. For purchase records, contact LemonSqueezy.
 
